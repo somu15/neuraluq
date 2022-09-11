@@ -1,11 +1,22 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Sep  5 15:47:14 2022
+
+@author: dhulls
+"""
+
 import numpy as np
+from tensorflow_probability.python.mcmc.internal import util as mcmc_util
 
 
-from . import config
-from .process import GlobalProcesses
-from .config import backend_name, tf
-from . import surrogates
-
+from neuraluq import config
+from neuraluq.process import GlobalProcesses
+# from process1 import GlobalProcesses
+from neuraluq.config import backend_name, tf
+from neuraluq import surrogates
+# tf1 = tf.Sessions()
+# tf1.run(tf.global_variables_initializer())
 
 class Model:
     """
@@ -58,6 +69,12 @@ class Model:
         if self.method is None:
             raise ValueError("Model has not been compiled with a method.")
         samples = self.method.sampling(self.sess)
+        return samples
+    
+    def test(self):
+        """Performs posterior estimate over the Bayesian model with a compiled method"""
+        
+        samples = self.method.returng(self.sess)
         return samples
 
     def predict(self, inputs, samples, processes, pde_fn=None):
@@ -128,25 +145,36 @@ class Model:
             )
             return log_prior + log_likeli
         # compile the method
-        print(log_posterior_fn(self.global_processes.initial_values))
+        # print(mcmc_util.maybe_call_fn_and_grads(log_posterior_fn, self.global_processes.initial_values))
+        print(self.global_processes.initial_values)
         method.make_sampler(log_posterior_fn, self.global_processes.initial_values)
         # assign the method
         self.method = method
-
-    def getlogprob(self):
+        
+    def getgrads(self, samples1):
         # build log posterior function
-        def log_posterior_fn11(*var_list):
+        def log_posterior_fn(*var_list):
+            # The computation of log probabilistic density of posterior distribution is
+            # decomposed into three steps.
+            # Step 1: assign var_list to corresponding processes, e.g. BNNs, constants.
+            # Step 2: for each process, compute its prior
+            # Step 3: for each likelihood, compute its likelihood
             global_var_dict = self.global_processes.assign(var_list)
             log_prior = []
             for key, p in self.global_processes.processes.items():
                 log_prior += [tf.reduce_sum(p.prior.log_prob(global_var_dict[key]))]
             log_prior = tf.reduce_sum(log_prior)
-            
+
             log_likeli = tf.reduce_sum(
                 [lh.log_prob(global_var_dict) for lh in self.likelihoods]
             )
-            return log_prior + log_likeli
-        return log_posterior_fn11(self.global_processes.initial_values)
+            return -(log_prior + log_likeli)
+        
+        # print(mcmc_util.maybe_call_fn_and_grads(log_posterior_fn, samples1))
+        tmp = mcmc_util.maybe_call_fn_and_grads(log_posterior_fn, samples1)
+        # result1 = tf1.run(tmp)[1]
+        # tf1.close()
+        return tmp # tf.Session().run(tmp)[1]  # log_posterior_fn(samples1) #  self.global_processes.initial_values 
 
     def log_pdf(self, method):
         """Compiles the model with a MCMC-type inference method"""

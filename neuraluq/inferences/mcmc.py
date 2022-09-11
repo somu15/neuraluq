@@ -65,7 +65,6 @@ class MCMC(Inference):
         print("Finished sampling from posterior distribution ...\n")
         return samples, results
 
-
 class HMC(MCMC):
     """Adaptive Hamiltonian Monte Carlo inference method."""
 
@@ -95,7 +94,6 @@ class HMC(MCMC):
             num_adaptation_steps=int(self.params["num_burnin"] * 0.8),
         )
         self.set_sampler(init_state)
-
 
 class LD(MCMC):
     """Langevin dynamics method."""

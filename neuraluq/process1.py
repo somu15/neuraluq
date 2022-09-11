@@ -1,4 +1,4 @@
-from .config import backend_name, tf
+from neuraluq.config import backend_name, tf
 
 
 class Process:
@@ -71,6 +71,10 @@ class Process:
     def num_variables(self):
         """Returns `Variable`'s posterior distribution."""
         return self._num_variables
+    
+    def num_variables1(self):
+        """Returns `Variable`'s posterior distribution."""
+        return self._num_variables
 
     @property
     def surrogate(self):
@@ -113,12 +117,12 @@ class GlobalProcesses:  # AllProcesses
             processes = [processes]
         # check if all processes have the right types. If not, do not trace any
         # input process.
-        for p in processes:
-            if (
-                isinstance(p, Process) is False
-                and isinstance(p, DeterministicProcess) is False
-            ):
-                raise TypeError("{} is not a well-defined process.".format(str(p)))
+        # for p in processes:
+        #     if (
+        #         isinstance(p, Process) is False
+        #         and isinstance(p, DeterministicProcess) is False
+        #     ):
+        #         raise TypeError("{} is not a well-defined process.".format(str(p)))
         # store and trace
         for p in processes:
             if p.key not in self.processes:
@@ -151,6 +155,7 @@ class GlobalProcesses:  # AllProcesses
             Returns:
                 sublists (dict): The deoomposed list.
         """
+        # print(self.total_num_variables)
         # if self.total_num_variables != len(var_list):
         #     raise ValueError("inconsistent number of variables")
         beg = 0
